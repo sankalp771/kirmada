@@ -1,37 +1,22 @@
-=== DATABASE MIGRATION LOG ===
-Timestamp: 2026-06-20T15:20:00+05:30
-Action: Initial Schema Migration Setup for Kirmada Cult Simulator
-Environment: Neon PostgreSQL Serverless
+=== USER 2 PHASE 1 DEVELOPMENT & MIGRATION LOG ===
+Last Updated: 2026-06-20T15:43:00+05:30
 Branch: U2-Sankalp
+Environment: Next.js + Neon PostgreSQL + Monad Testnet
 
-1. Dependency Installation
-- Installed pg (v8.22.0)
-- Installed dotenv (v17.4.2)
-- Installed devDependencies: @types/pg (v8.20.0), tsx (v4.22.4)
-
-2. SQL Schema Design (schema.sql)
+================================================================================
+1. DATABASE & SCHEMA SETUP (Neon PostgreSQL)
+================================================================================
+Action: Schema Migration
+SQL File: schema.sql
 Tables Created:
-- ideologies: id (SERIAL), name (VARCHAR), founder_prophet_id (INT), doctrine_version (VARCHAR), followers (INT), reputation (INT), treasury (NUMERIC)
-- prophets: id (SERIAL), ideology_id (INT), personality (TEXT), history (TEXT), goal (TEXT), erc8004_token_id (VARCHAR)
-- doctrine_versions: id (SERIAL), ideology_id (INT), version (VARCHAR), text (TEXT), reason (TEXT), created_at (TIMESTAMP)
-- events: id (SERIAL), type (VARCHAR), ideology_id (INT), payload (JSONB), created_at (TIMESTAMP)
-- feedback: id (SERIAL), ideology_id (INT), user_id (VARCHAR), text (TEXT), created_at (TIMESTAMP)
-- schisms: id (SERIAL), parent_ideology_id (INT), new_ideology_id (INT), justification (TEXT), created_at (TIMESTAMP)
-Foreign Key Constraints:
-- fk_founder_prophet: ideologies(founder_prophet_id) -> prophets(id)
-- prophets(ideology_id) -> ideologies(id)
-- doctrine_versions(ideology_id) -> ideologies(id)
-- events(ideology_id) -> ideologies(id)
-- feedback(ideology_id) -> ideologies(id)
-- schisms(parent_ideology_id) -> ideologies(id)
-- schisms(new_ideology_id) -> ideologies(id)
-Indexes Created:
-- idx_prophets_ideology
-- idx_doctrine_versions_ideology
-- idx_events_ideology
-- idx_feedback_ideology
+ - ideologies (reputation, followers, founder_prophet_id, treasury)
+ - prophets (personality, history, goal, erc8004_token_id)
+ - doctrine_versions (version, text, reason)
+ - events (type, payload)
+ - feedback (user_id, text)
+ - schisms (parent_ideology_id, new_ideology_id, justification)
 
-3. Migration Script Output (npx tsx scripts/migrate.ts)
+Migration Script Output (npx tsx scripts/migrate.ts):
 --------------------------------------------------------------------------------
 Connecting to database...
 Successfully connected to Neon PostgreSQL database.
@@ -50,5 +35,83 @@ Found tables in 'public' schema:
 Database connection closed.
 --------------------------------------------------------------------------------
 
-Status: SUCCESS
-==============================
+================================================================================
+2. DATABASE SEED DATA
+================================================================================
+Action: Seed initial mockup ideologies, prophets, and doctrine versions.
+Script run: npx tsx scripts/seed.ts
+Seeded Ideologies:
+ - Techno-Optimism (Founder Prophet ID: 1, starting followers: 120)
+ - Neo-Luddism (Founder Prophet ID: 2, starting followers: 45)
+ - Solarpunk (Founder Prophet ID: 3, starting followers: 95)
+Seeded initial doctrine versions for all three.
+
+================================================================================
+3. FEATURE 3: JOIN IDEOLOGY (Neon write)
+================================================================================
+Endpoint: POST /api/ideology/join
+Transaction flow:
+ - Starts transaction.
+ - Increments the target ideology follower count by 1.
+ - Logs a 'join' event in the events table with the user ID payload.
+ - Commits transaction.
+
+Logic Verification Output (npx tsx scripts/test-join.ts):
+--------------------------------------------------------------------------------
+Connecting to database for F3 test...
+Starting followers for Techno-Optimism: 120
+Simulating Join transaction (User: user_test_sankalp)...
+Transaction committed successfully!
+Updated followers for Techno-Optimism: 121
+Join Event payload in DB: {"userId":"user_test_sankalp","joinedAt":"2026-06-20T10:05:11.625Z"}
+
+VERIFICATION SUCCESS: Follower count increased by 1 and event was logged!
+Database connection closed.
+--------------------------------------------------------------------------------
+
+================================================================================
+4. FEATURE 4: INFLUENCE DOCTRINE (Neon write)
+================================================================================
+Endpoint: POST /api/ideology/feedback
+Logic flow:
+ - Validates if the target ideology exists.
+ - Inserts user feedback into the feedback table (later consumed by the reflection cycle).
+
+Logic Verification Output (npx tsx scripts/test-feedback.ts):
+--------------------------------------------------------------------------------
+Connecting to database for F4 test...
+Found ideology: Solarpunk (ID: 3)
+Inserting feedback: "We need to ensure green tech benefits everyone, not just high-income districts."
+Feedback inserted successfully!
+Returned row: {"id":1,"ideology_id":3,"user_id":"user_test_sankalp","text":"We need to ensure green tech benefits everyone, not just high-income districts.","created_at":"2026-06-20T10:10:05.254Z"}
+
+VERIFICATION SUCCESS: Feedback recorded and verified in the database!
+Database connection closed.
+--------------------------------------------------------------------------------
+
+================================================================================
+5. MONAD SMART CONTRACT SETUP & COMPILATION
+================================================================================
+Subdirectory: cult-sim-contracts/
+Contract: SchismRegistry.sol (records schisms and alliances)
+Tests: SchismRegistry.t.sol
+
+Solidity Compilation and Tests Output (forge test):
+--------------------------------------------------------------------------------
+Ran 2 tests for test/SchismRegistry.t.sol:SchismRegistryTest
+[PASS] test_RecordAlliance() (gas: 12891)
+[PASS] test_RecordSchism() (gas: 15401)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 1.28s (763.70µs CPU time)
+
+Ran 1 test suite in 1.85s (1.28s CPU time): 2 tests passed, 0 failed, 0 skipped (2 total tests)
+--------------------------------------------------------------------------------
+
+================================================================================
+6. PRODUCTION COMPILATION STATUS
+================================================================================
+Build command: pnpm run build
+Turbopack compilation and TypeScript verification: PASSED
+Generated static pages and route types: SUCCESSFUL
+
+Log Status: ACTIVE & VERIFIED
+================================================================================
