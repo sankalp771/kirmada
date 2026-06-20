@@ -5,7 +5,7 @@ import { PROPHET_THEMES } from '@/lib/types';
 
 export default function ChatIndex() {
   return (
-    <div className="flex-1 w-full flex flex-col p-6 lg:p-10 min-h-[calc(100vh-88px)] noise-bg bg-[#141313] text-[#e5e2e1] font-sans">
+    <div className="flex-1 w-full flex flex-col p-6 lg:p-10 min-h-[calc(100vh-88px)] text-[#e5e2e1] font-sans">
       
       <header className="mb-10 flex flex-col items-center text-center">
         <h1 className="text-[36px] md:text-[48px] font-bold text-[#e5e2e1] tracking-tight mb-4" style={{ fontFamily: 'Lexend' }}>

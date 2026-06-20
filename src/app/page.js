@@ -5,7 +5,7 @@ import { PROPHET_IDS } from '@/lib/types';
 
 export default function Home() {
   return (
-    <div className="flex-1 w-full flex flex-col xl:flex-row gap-8 p-6 lg:p-8 min-h-[calc(100vh-88px)] noise-bg bg-[#141313] text-[#e5e2e1] font-sans relative">
+    <div className="flex-1 w-full flex flex-col xl:flex-row gap-8 p-6 lg:p-8 min-h-[calc(100vh-88px)] text-[#e5e2e1] font-sans relative">
       
       {/* Center Canvas: Factions */}
       <div className="flex-1 flex flex-col gap-8">

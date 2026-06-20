@@ -83,7 +83,7 @@ export default function ChatPage({ params }) {
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col xl:flex-row gap-8 p-6 lg:p-8 min-h-[calc(100vh-88px)] noise-bg bg-[#141313] text-[#e5e2e1] font-sans">
+    <div className="flex-1 w-full flex flex-col xl:flex-row gap-8 p-6 lg:p-8 min-h-[calc(100vh-88px)] text-[#e5e2e1] font-sans">
       
       {/* Left Panel: Prophet Identity */}
       <div className="w-full xl:w-80 shrink-0 flex flex-col gap-6">
