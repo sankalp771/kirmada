@@ -1,5 +1,5 @@
 === USER 2 DEVELOPMENT & MIGRATION LOG ===
-Last Updated: 2026-06-20T16:00:00+05:30
+Last Updated: 2026-06-20T16:05:00+05:30
 Branch: U2-Sankalp
 Environment: Next.js + Neon PostgreSQL + Monad Testnet
 
@@ -165,7 +165,29 @@ Database connection closed.
 --------------------------------------------------------------------------------
 
 ================================================================================
-9. PRODUCTION COMPILATION STATUS
+9. ALLIANCES (Neon DB + Monad Testnet On-chain Write)
+================================================================================
+Endpoint: POST /api/alliance
+Logic Verification Output (npx tsx scripts/test-alliance.ts):
+--------------------------------------------------------------------------------
+Connecting to database for Alliance test...
+Ideology A: Solarpunk (ID: 3)
+Ideology B: Neo-Luddism (ID: 2)
+Recorded alliance events in Neon DB.
+Triggering on-chain recordAlliance on Monad Testnet...
+Submitting on-chain recordAlliance transaction: A=3, B=2...
+Transaction submitted. Hash: 0x0132f3d3a63b0e7f73f3712d62b12c2a2a34cc0675d6ef24c4502ace3166f326
+Transaction confirmed in block 39448734
+Transaction committed!
+
+SUCCESS: Alliance transaction verified!
+Transaction Hash: 0x0132f3d3a63b0e7f73f3712d62b12c2a2a34cc0675d6ef24c4502ace3166f326
+Block Number: 39448734
+Database connection closed.
+--------------------------------------------------------------------------------
+
+================================================================================
+10. PRODUCTION COMPILATION STATUS
 ================================================================================
 Build command: pnpm run build
 Turbopack compilation and TypeScript verification: PASSED
