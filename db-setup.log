@@ -1,0 +1,54 @@
+=== DATABASE MIGRATION LOG ===
+Timestamp: 2026-06-20T15:20:00+05:30
+Action: Initial Schema Migration Setup for Kirmada Cult Simulator
+Environment: Neon PostgreSQL Serverless
+Branch: U2-Sankalp
+
+1. Dependency Installation
+- Installed pg (v8.22.0)
+- Installed dotenv (v17.4.2)
+- Installed devDependencies: @types/pg (v8.20.0), tsx (v4.22.4)
+
+2. SQL Schema Design (schema.sql)
+Tables Created:
+- ideologies: id (SERIAL), name (VARCHAR), founder_prophet_id (INT), doctrine_version (VARCHAR), followers (INT), reputation (INT), treasury (NUMERIC)
+- prophets: id (SERIAL), ideology_id (INT), personality (TEXT), history (TEXT), goal (TEXT), erc8004_token_id (VARCHAR)
+- doctrine_versions: id (SERIAL), ideology_id (INT), version (VARCHAR), text (TEXT), reason (TEXT), created_at (TIMESTAMP)
+- events: id (SERIAL), type (VARCHAR), ideology_id (INT), payload (JSONB), created_at (TIMESTAMP)
+- feedback: id (SERIAL), ideology_id (INT), user_id (VARCHAR), text (TEXT), created_at (TIMESTAMP)
+- schisms: id (SERIAL), parent_ideology_id (INT), new_ideology_id (INT), justification (TEXT), created_at (TIMESTAMP)
+Foreign Key Constraints:
+- fk_founder_prophet: ideologies(founder_prophet_id) -> prophets(id)
+- prophets(ideology_id) -> ideologies(id)
+- doctrine_versions(ideology_id) -> ideologies(id)
+- events(ideology_id) -> ideologies(id)
+- feedback(ideology_id) -> ideologies(id)
+- schisms(parent_ideology_id) -> ideologies(id)
+- schisms(new_ideology_id) -> ideologies(id)
+Indexes Created:
+- idx_prophets_ideology
+- idx_doctrine_versions_ideology
+- idx_events_ideology
+- idx_feedback_ideology
+
+3. Migration Script Output (npx tsx scripts/migrate.ts)
+--------------------------------------------------------------------------------
+Connecting to database...
+Successfully connected to Neon PostgreSQL database.
+Reading schema from D:\Temp\kirmada\schema.sql...
+Executing schema SQL queries...
+Schema pushed successfully!
+Verifying tables in database...
+
+Found tables in 'public' schema:
+ - doctrine_versions
+ - events
+ - feedback
+ - ideologies
+ - prophets
+ - schisms
+Database connection closed.
+--------------------------------------------------------------------------------
+
+Status: SUCCESS
+==============================
