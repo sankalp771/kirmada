@@ -164,7 +164,7 @@ Don't try to gate every feature behind x402 — one well-demoed paid interaction
 ---
 
 ## 6. Ownership, Updated With Monad Touchpoints
-
+please refer feature-f.md for F refrence!
 | Track | Owner | Features | Touches Monad/Neon for |
 |---|---|---|---|
 | Agent Intelligence | User 1 | F1, F5 ⭐, F7 ⭐⭐⭐ | Mints ERC-8004 identity on prophet creation/schism (§4); all reflection state in Neon (§2) |

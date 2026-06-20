@@ -16,3 +16,6 @@ node_modules/
 /build
 /.next
 /out
+
+# Local binaries
+bin/
