@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query, pool } from '@/lib/db';
+import { query, pool } from '@/lib/dbClient';
 
 // GET: Fetch all doctrine versions for a specific ideology
 export async function GET(

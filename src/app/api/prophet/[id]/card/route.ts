@@ -1,10 +1,9 @@
 import { getProphetCard } from "../../../../../lib/prophet/card";
 
-type Params = { params: { id: string } };
-
-export async function GET(_: Request, context: Params): Promise<Response> {
+export async function GET(_: Request, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
-    const payload = await getProphetCard(context.params.id);
+    const params = await context.params;
+    const payload = await getProphetCard(params.id);
     return Response.json(payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

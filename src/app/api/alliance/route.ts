@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { pool } from '@/lib/dbClient';
 import { recordAllianceOnChain } from '@/lib/contracts';
 
 export async function POST(request: Request) {
