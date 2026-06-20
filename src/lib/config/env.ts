@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 // Free models via OpenRouter with large context windows and good reasoning
 // Auto-rotation uses only the user-approved free models below.
 export const FREE_MODELS = [

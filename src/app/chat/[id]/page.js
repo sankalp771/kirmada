@@ -49,11 +49,49 @@ export default function ChatPage({ params }) {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [metrics, setMetrics] = useState(null);
+  const [joined, setJoined] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    fetch(`/api/ideology/${prophetId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.ideology) {
+          setMetrics(data.ideology);
+        }
+      })
+      .catch(err => console.error("Error fetching ideology metrics:", err));
+  }, [prophetId]);
+
+  const handleJoin = async () => {
+    try {
+      const res = await fetch('/api/ideology/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ideologyId: `${prophetId}_ideology`,
+          userId: 'anonymous_user_' + Math.random().toString(36).substr(2, 9)
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setJoined(true);
+        if (metrics) {
+          setMetrics(prev => ({
+            ...prev,
+            followers: prev.followers + 1
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to join ideology:", error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,12 +148,16 @@ export default function ChatPage({ params }) {
                 <p className="text-[14px] text-[#e5e2e1] leading-snug">{prophetDef.goal}</p>
              </div>
              <div>
+                <span className="text-[10px] tracking-widest text-[#a9cecc] mb-1 block" style={{ fontFamily: 'JetBrains Mono' }}>FOLLOWERS</span>
+                <span className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>{metrics ? metrics.followers : '...'}</span>
+             </div>
+             <div>
                 <span className="text-[10px] tracking-widest text-[#a9cecc] mb-1 block" style={{ fontFamily: 'JetBrains Mono' }}>NETWORK_INFLUENCE</span>
                 <div className="flex items-center gap-3">
                    <div className="h-1.5 bg-[#201f1f] flex-1 rounded-full overflow-hidden">
-                      <div className={`h-full bg-white w-[65%] ${uiTheme.bg.replace('/10', '')} shadow-[0_0_10px_currentColor]`} style={{ color: uiTheme.text.split('-')[1].replace(']', '') }}></div>
+                      <div className={`h-full bg-white shadow-[0_0_10px_currentColor] ${uiTheme.text}`} style={{ width: `${metrics ? metrics.reputation : 50}%` }}></div>
                    </div>
-                   <span className="text-[14px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>65%</span>
+                   <span className="text-[14px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>{metrics ? metrics.reputation : 50}%</span>
                 </div>
              </div>
           </div>
@@ -128,9 +170,14 @@ export default function ChatPage({ params }) {
              <span className="material-symbols-outlined">payments</span>
              Offer Tribute
            </button>
-           <button className="w-full py-3 bg-[#a9cecc]/10 text-[#a9cecc] border border-[#a9cecc]/30 hover:bg-[#a9cecc] hover:text-[#050505] transition-all rounded text-[12px] font-bold tracking-widest flex items-center justify-center gap-2" style={{ fontFamily: 'JetBrains Mono' }}>
-             <span className="material-symbols-outlined">how_to_vote</span>
-             Align Doctrine
+           <button 
+             onClick={handleJoin}
+             disabled={joined}
+             className={`w-full py-3 ${joined ? 'bg-[#39ff14]/20 text-[#39ff14] border-[#39ff14]/30 cursor-default' : 'bg-[#a9cecc]/10 text-[#a9cecc] border-[#a9cecc]/30 hover:bg-[#a9cecc] hover:text-[#050505]'} transition-all rounded text-[12px] font-bold tracking-widest flex items-center justify-center gap-2`} 
+             style={{ fontFamily: 'JetBrains Mono' }}
+           >
+             <span className="material-symbols-outlined">{joined ? 'check_circle' : 'person_add'}</span>
+             {joined ? 'JOINED FACTION' : 'JOIN FACTION / FOLLOW'}
            </button>
         </div>
       </div>

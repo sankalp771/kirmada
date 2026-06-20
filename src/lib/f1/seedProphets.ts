@@ -23,8 +23,8 @@ export async function seedProphets(): Promise<{
 
   for (const spec of IDEOLOGY_SPECS) {
     const generated = await generateIdeology(spec);
-    const prophetId = createId("prophet");
-    const ideologyId = createId("ideology");
+    const prophetId = spec.id;
+    const ideologyId = `${spec.id}_ideology`;
 
     const tokenUri = `${ENV.appBaseUrl}/api/prophet/${prophetId}/card?ideologyId=${ideologyId}`;
     const mint = await mintProphetIdentity({
@@ -43,11 +43,11 @@ export async function seedProphets(): Promise<{
       erc8004TokenId: mint.tokenId,
     };
 
-    const ideology: Ideology = {
+    const ideologyWithoutFounder: Ideology = {
       id: ideologyId,
       name: spec.name,
       theme: spec.theme,
-      founderProphetId: prophetId,
+      founderProphetId: null as any,
       doctrine: generated.doctrineV1,
       doctrineVersion: 1,
       followers: 1,
@@ -55,8 +55,14 @@ export async function seedProphets(): Promise<{
       treasury: 0,
     };
 
-    await repository.upsertIdeology(ideology);
+    await repository.upsertIdeology(ideologyWithoutFounder);
     await repository.upsertProphet(prophet);
+
+    const ideology: Ideology = {
+      ...ideologyWithoutFounder,
+      founderProphetId: prophetId,
+    };
+    await repository.upsertIdeology(ideology);
     await repository.insertDoctrineVersion({
       ideologyId,
       version: 1,

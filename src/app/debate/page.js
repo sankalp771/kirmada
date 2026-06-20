@@ -13,16 +13,24 @@ export default function DebatePage() {
   const startDebate = async () => {
     if (!topic.trim() || isDebating) return;
     setIsDebating(true);
-    setDebateLog([{ speaker: 'system', content: `[SYSTEM] INITIATING TRIBUNAL ON PROTOCOL: "${topic.toUpperCase()}"` }]);
-    setRound(1);
+    setDebateLog(prev => [...prev, { speaker: 'system', content: `[SYSTEM] INITIATING ROUND ${round + 1} ON PROTOCOL: "${topic.toUpperCase()}"` }]);
 
     try {
-      const responses = await generateDebateResponses(topic);
+      const rawResponses = generateDebateResponses(topic, round);
+      const responses = [
+        { prophetId: 'oracle', argument: rawResponses.oracle },
+        { prophetId: 'virus', argument: rawResponses.virus },
+        { prophetId: 'collective', argument: rawResponses.collective },
+      ];
+
       let delay = 1000;
       responses.forEach((res, index) => {
         setTimeout(() => {
           setDebateLog(prev => [...prev, { speaker: res.prophetId, content: res.argument }]);
-          if (index === responses.length - 1) setIsDebating(false);
+          if (index === responses.length - 1) {
+            setIsDebating(false);
+            setRound(prev => prev + 1);
+          }
         }, delay);
         delay += 3000;
       });

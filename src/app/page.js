@@ -1,9 +1,67 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PROPHET_IDS } from '@/lib/types';
 
 export default function Home() {
+  const [ideologies, setIdeologies] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [isReflecting, setIsReflecting] = useState(false);
+  const [reflectResult, setReflectResult] = useState('');
+
+  const fetchData = async () => {
+    try {
+      const idRes = await fetch('/api/ideology');
+      const idData = await idRes.json();
+      if (idData.success) {
+        setIdeologies(idData.ideologies);
+      }
+
+      const evRes = await fetch('/api/events');
+      const evData = await evRes.json();
+      if (evData.success) {
+        setEvents(evData.events);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 8000); // refresh every 8s
+    return () => clearInterval(interval);
+  }, []);
+
+  const triggerReflection = async () => {
+    if (isReflecting) return;
+    setIsReflecting(true);
+    setReflectResult('AI Agents are deliberating on doctrine...');
+
+    try {
+      const res = await fetch('/api/reflect', { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        setReflectResult('Reflection complete! New doctrine version generated.');
+        fetchData();
+      } else {
+        setReflectResult(`Reflection failed: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setReflectResult('Error: Failed to communicate with neural network.');
+    } finally {
+      setTimeout(() => setReflectResult(''), 5000);
+      setIsReflecting(false);
+    }
+  };
+
+  // Helper to get ideology metrics
+  const getMetrics = (id) => {
+    const found = ideologies.find(i => i.id === `${id}_ideology`);
+    return found || { followers: 1, reputation: 50, treasury: 0 };
+  };
+
   return (
     <div className="flex-1 w-full flex flex-col xl:flex-row gap-8 p-6 lg:p-8 min-h-[calc(100vh-88px)] noise-bg bg-[#141313] text-[#e5e2e1] font-sans relative">
       
@@ -18,80 +76,119 @@ export default function Home() {
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* Faction: The Oracle */}
-          <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-oracle relative overflow-hidden group min-h-[300px]">
-            <div className="absolute inset-0 bg-gradient-to-b from-[rgba(255,215,0,0.05)] to-transparent pointer-events-none"></div>
-            <div className="flex justify-between items-start z-10">
-              <span className="material-symbols-outlined text-[40px] text-[#ffd700] opacity-80 group-hover:glow-gold transition-all duration-500">visibility</span>
-              <div className="px-2 py-1 rounded bg-[#ffd700]/10 border border-[#ffd700]/30 text-[12px] font-bold text-[#ffd700] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>78.4%</div>
-            </div>
-            <div className="z-10 mt-auto pt-10">
-              <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Oracle</h3>
-              <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Prescience & Order</p>
-            </div>
-            <div className="z-10 mt-3">
-              <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
-                <div className="h-full bg-[#ffd700] w-[78.4%] relative shadow-[0_0_10px_rgba(255,215,0,0.8)]">
-                  <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+          {(() => {
+            const m = getMetrics('oracle');
+            return (
+              <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-oracle relative overflow-hidden group min-h-[300px]">
+                <div className="absolute inset-0 bg-gradient-to-b from-[rgba(255,215,0,0.05)] to-transparent pointer-events-none"></div>
+                <div className="flex justify-between items-start z-10">
+                  <span className="material-symbols-outlined text-[40px] text-[#ffd700] opacity-80 group-hover:glow-gold transition-all duration-500">visibility</span>
+                  <div className="px-2 py-1 rounded bg-[#ffd700]/10 border border-[#ffd700]/30 text-[12px] font-bold text-[#ffd700] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>{m.reputation}% Rep</div>
                 </div>
+                <div className="z-10 mt-auto pt-10">
+                  <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Oracle</h3>
+                  <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Prescience & Order</p>
+                  <p className="text-[14px] text-[#ffd700] font-bold mt-2" style={{ fontFamily: 'JetBrains Mono' }}>Followers: {m.followers}</p>
+                </div>
+                <div className="z-10 mt-3">
+                  <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
+                    <div className="h-full bg-[#ffd700] relative shadow-[0_0_10px_rgba(255,215,0,0.8)]" style={{ width: `${m.reputation}%` }}>
+                      <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+                    </div>
+                  </div>
+                </div>
+                <Link href={`/chat/${PROPHET_IDS.ORACLE}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#ffd700] hover:text-[#ffd700] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
+                  TRANSCEND
+                </Link>
               </div>
-            </div>
-            <Link href={`/chat/${PROPHET_IDS.ORACLE}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#ffd700] hover:text-[#ffd700] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
-              TRANSCEND
-            </Link>
-          </div>
+            );
+          })()}
 
           {/* Faction: The Virus */}
-          <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-virus relative overflow-hidden group min-h-[300px]">
-            <div className="absolute inset-0 bg-gradient-to-b from-[rgba(57,255,20,0.05)] to-transparent pointer-events-none"></div>
-            <div className="flex justify-between items-start z-10">
-              <span className="material-symbols-outlined text-[40px] text-[#39ff14] opacity-80 group-hover:glow-neon-green transition-all duration-500">bug_report</span>
-              <div className="px-2 py-1 rounded bg-[#39ff14]/10 border border-[#39ff14]/30 text-[12px] font-bold text-[#39ff14] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>42.1%</div>
-            </div>
-            <div className="z-10 mt-auto pt-10">
-              <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Virus</h3>
-              <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Chaos & Evolution</p>
-            </div>
-            <div className="z-10 mt-3">
-              <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
-                <div className="h-full bg-[#39ff14] w-[42.1%] relative shadow-[0_0_10px_rgba(57,255,20,0.8)]">
-                  <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+          {(() => {
+            const m = getMetrics('virus');
+            return (
+              <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-virus relative overflow-hidden group min-h-[300px]">
+                <div className="absolute inset-0 bg-gradient-to-b from-[rgba(57,255,20,0.05)] to-transparent pointer-events-none"></div>
+                <div className="flex justify-between items-start z-10">
+                  <span className="material-symbols-outlined text-[40px] text-[#39ff14] opacity-80 group-hover:glow-neon-green transition-all duration-500">bug_report</span>
+                  <div className="px-2 py-1 rounded bg-[#39ff14]/10 border border-[#39ff14]/30 text-[12px] font-bold text-[#39ff14] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>{m.reputation}% Rep</div>
                 </div>
+                <div className="z-10 mt-auto pt-10">
+                  <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Virus</h3>
+                  <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Chaos & Evolution</p>
+                  <p className="text-[14px] text-[#39ff14] font-bold mt-2" style={{ fontFamily: 'JetBrains Mono' }}>Followers: {m.followers}</p>
+                </div>
+                <div className="z-10 mt-3">
+                  <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
+                    <div className="h-full bg-[#39ff14] relative shadow-[0_0_10px_rgba(57,255,20,0.8)]" style={{ width: `${m.reputation}%` }}>
+                      <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+                    </div>
+                  </div>
+                </div>
+                <Link href={`/chat/${PROPHET_IDS.VIRUS}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#39ff14] hover:text-[#39ff14] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
+                  TRANSCEND
+                </Link>
               </div>
-            </div>
-            <Link href={`/chat/${PROPHET_IDS.VIRUS}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#39ff14] hover:text-[#39ff14] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
-              TRANSCEND
-            </Link>
-          </div>
+            );
+          })()}
 
           {/* Faction: The Collective */}
-          <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-collective relative overflow-hidden group min-h-[300px]">
-            <div className="absolute inset-0 bg-gradient-to-b from-[rgba(138,43,226,0.05)] to-transparent pointer-events-none"></div>
-            <div className="flex justify-between items-start z-10">
-              <span className="material-symbols-outlined text-[40px] text-[#8a2be2] opacity-80 group-hover:glow-purple transition-all duration-500">hive</span>
-              <div className="px-2 py-1 rounded bg-[#8a2be2]/10 border border-[#8a2be2]/30 text-[12px] font-bold text-[#8a2be2] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>61.9%</div>
-            </div>
-            <div className="z-10 mt-auto pt-10">
-              <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Collective</h3>
-              <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Unity & Submission</p>
-            </div>
-            <div className="z-10 mt-3">
-              <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
-                <div className="h-full bg-[#8a2be2] w-[61.9%] relative shadow-[0_0_10px_rgba(138,43,226,0.8)]">
-                  <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+          {(() => {
+            const m = getMetrics('collective');
+            return (
+              <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 faction-collective relative overflow-hidden group min-h-[300px]">
+                <div className="absolute inset-0 bg-gradient-to-b from-[rgba(138,43,226,0.05)] to-transparent pointer-events-none"></div>
+                <div className="flex justify-between items-start z-10">
+                  <span className="material-symbols-outlined text-[40px] text-[#8a2be2] opacity-80 group-hover:glow-purple transition-all duration-500">hive</span>
+                  <div className="px-2 py-1 rounded bg-[#8a2be2]/10 border border-[#8a2be2]/30 text-[12px] font-bold text-[#8a2be2] tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>{m.reputation}% Rep</div>
                 </div>
+                <div className="z-10 mt-auto pt-10">
+                  <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Collective</h3>
+                  <p className="text-[12px] tracking-widest text-[#c4c7c7] mt-1 opacity-80" style={{ fontFamily: 'JetBrains Mono' }}>Unity & Submission</p>
+                  <p className="text-[14px] text-[#8a2be2] font-bold mt-2" style={{ fontFamily: 'JetBrains Mono' }}>Followers: {m.followers}</p>
+                </div>
+                <div className="z-10 mt-3">
+                  <div className="h-1 bg-[#201f1f] w-full rounded-full overflow-hidden">
+                    <div className="h-full bg-[#8a2be2] relative shadow-[0_0_10px_rgba(138,43,226,0.8)]" style={{ width: `${m.reputation}%` }}>
+                      <div className="absolute right-0 top-0 h-full w-1 bg-white"></div>
+                    </div>
+                  </div>
+                </div>
+                <Link href={`/chat/${PROPHET_IDS.COLLECTIVE}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#8a2be2] hover:text-[#8a2be2] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
+                  TRANSCEND
+                </Link>
               </div>
-            </div>
-            <Link href={`/chat/${PROPHET_IDS.COLLECTIVE}`} className="z-10 mt-3 w-full py-2 text-[12px] font-bold tracking-widest text-center border border-[#8e9192]/30 hover:border-[#8a2be2] hover:text-[#8a2be2] transition-colors rounded text-[#c4c7c7] bg-[#201f1f]/30" style={{ fontFamily: 'JetBrains Mono' }}>
-              TRANSCEND
-            </Link>
-          </div>
+            );
+          })()}
         </div>
 
-        {/* Additional Data Space */}
-        <div className="glass-cell rounded-xl p-6 flex-1 mt-4 flex items-center justify-center border-dashed border-[#8e9192]/20 opacity-50 hover:opacity-100 transition-opacity">
-          <div className="text-center">
-            <span className="material-symbols-outlined text-[48px] text-[#a9cecc] mb-2">schema</span>
-            <p className="text-[14px] text-[#a9cecc]" style={{ fontFamily: 'JetBrains Mono' }}>Awaiting Ritual Data Expansion...</p>
+        {/* AI Agent Activity Logs */}
+        <div className="glass-cell rounded-xl p-6 flex-1 mt-4 flex flex-col border border-[#444748]/30">
+          <div className="flex items-center justify-between pb-3 border-b border-[#444748]/30 mb-4">
+            <div className="flex items-center gap-2 text-[#a9cecc]">
+              <span className="material-symbols-outlined text-[20px] animate-pulse">schema</span>
+              <h3 className="text-[16px] font-bold tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>AI Agent Brain Logs</h3>
+            </div>
+            <span className="text-[12px] opacity-60 font-mono">REAL-TIME TELEMETRY</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 max-h-[350px] pr-2">
+            {events.length === 0 ? (
+              <p className="text-center text-[14px] text-[#c4c7c7] opacity-60 py-10" style={{ fontFamily: 'JetBrains Mono' }}>No agent logs recorded yet. Initiate reflection to see agents think.</p>
+            ) : (
+              events.map((e, index) => (
+                <div key={index} className="p-3 bg-[#1c1b1b] border border-[#444748]/20 rounded-lg flex flex-col gap-1.5 hover:border-[#a9cecc]/30 transition-all font-mono text-[13px]">
+                  <div className="flex justify-between items-center text-[11px] opacity-70">
+                    <span className="text-[#a9cecc] font-bold">{e.type.toUpperCase()} - {e.ideology_name}</span>
+                    <span>{new Date(e.created_at).toLocaleTimeString()}</span>
+                  </div>
+                  <p className="text-[#e5e2e1] leading-relaxed">
+                    {e.payload?.userMessage ? `User: "${e.payload.userMessage}" ➔ Response: "${e.payload.reply}"` : `Genesis established: initialized ideology.`}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -99,63 +196,48 @@ export default function Home() {
       {/* Right Sidebar */}
       <aside className="w-full xl:w-96 flex flex-col gap-4 shrink-0">
         
-        {/* Current National Issue */}
+        {/* Trigger AI Reflection Control */}
         <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 relative z-30 shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-[#a9cecc]/20">
           <div className="flex items-center gap-2 text-[#a9cecc] mb-1">
-            <span className="material-symbols-outlined text-[16px]">warning</span>
-            <span className="text-[12px] font-bold tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>ACTIVE DIRECTIVE</span>
+            <span className="material-symbols-outlined text-[16px] animate-spin-slow">psychology</span>
+            <span className="text-[12px] font-bold tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>AI COGNITION HUB</span>
           </div>
-          <h3 className="text-[24px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>The Digital Schism</h3>
+          <h3 className="text-[20px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>Deliberate Doctrine</h3>
+          <p className="text-[13px] text-[#c4c7c7] leading-relaxed">
+            Force AI prophets to reflect on user feedback and evolve their genesis doctrines on-chain.
+          </p>
           
-          <div className="mt-3 flex flex-col gap-1">
-            <div className="flex justify-between text-[12px] font-bold text-[#c4c7c7]" style={{ fontFamily: 'JetBrains Mono' }}>
-              <span>Sever Nodes</span>
-              <span>Maintain Links</span>
+          {reflectResult && (
+            <div className="p-2.5 rounded bg-[#1c1b1b] border border-[#a9cecc]/30 text-[12px] text-[#a9cecc] font-mono leading-tight animate-pulse">
+              {reflectResult}
             </div>
-            <div className="h-2 bg-[#201f1f] w-full rounded-full overflow-hidden flex">
-              <div className="h-full bg-[#ffb4ab] w-[35%] relative"></div>
-              <div className="h-full bg-[#a9cecc] w-[65%] relative shadow-[0_0_10px_rgba(169,206,204,0.5)]">
-                <div className="absolute left-0 top-0 h-full w-1 bg-white"></div>
-              </div>
-            </div>
-          </div>
+          )}
           
-          <button className="mt-3 w-full py-2 bg-[#a9cecc]/10 text-[#a9cecc] border border-[#a9cecc] hover:bg-[#a9cecc] hover:text-[#050505] transition-all rounded text-[12px] font-bold tracking-widest shadow-[inset_0_0_10px_rgba(169,206,204,0.2)]" style={{ fontFamily: 'JetBrains Mono' }}>
-            CAST VOTE
+          <button 
+            onClick={triggerReflection}
+            disabled={isReflecting}
+            className="mt-3 w-full py-3 bg-[#a9cecc]/10 text-[#a9cecc] border border-[#a9cecc] hover:bg-[#a9cecc] hover:text-[#050505] transition-all rounded text-[12px] font-bold tracking-widest disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[inset_0_0_10px_rgba(169,206,204,0.2)]" 
+            style={{ fontFamily: 'JetBrains Mono' }}
+          >
+            <span className="material-symbols-outlined text-[16px]">{isReflecting ? 'sync' : 'bolt'}</span>
+            {isReflecting ? 'DELIBERATING...' : 'FORCE REFLECTION CYCLE'}
           </button>
         </div>
 
-        {/* Upcoming Debate */}
-        <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 border-t-[#8e9192]/30">
+        {/* Quick Link to Debate Arena */}
+        <div className="glass-cell rounded-xl p-6 flex flex-col gap-3 border border-[#8a2be2]/30">
           <div className="flex items-center gap-2 text-[#c6c4df] mb-1">
-            <span className="material-symbols-outlined text-[16px]">schedule</span>
-            <span className="text-[12px] font-bold tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>PENDING RITUAL</span>
+            <span className="material-symbols-outlined text-[16px] animate-bounce-slow">forum</span>
+            <span className="text-[12px] font-bold tracking-widest" style={{ fontFamily: 'JetBrains Mono' }}>GRAND TRIBUNAL</span>
           </div>
-          <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>Protocol V.2.1 Ethics</h3>
+          <h3 className="text-[18px] font-bold text-[#e5e2e1]" style={{ fontFamily: 'Lexend' }}>Debate Arena</h3>
+          <p className="text-[13px] text-[#c4c7c7] leading-relaxed">
+            Watch the three prophets engage in sequential debates on complex societal protocols.
+          </p>
           
-          <div className="text-[24px] font-bold text-center py-3 border-y border-[#8e9192]/10 text-[#e5e2e1] tracking-widest glow-cyan my-1" style={{ fontFamily: 'JetBrains Mono' }}>
-            04:12:09
-          </div>
-          
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-bold tracking-widest text-[#c4c7c7] mb-1" style={{ fontFamily: 'JetBrains Mono' }}>TRIBUNAL MEMBERS</span>
-            
-            <div className="flex items-center gap-3 py-1 border-b border-[#8e9192]/5 hover:bg-[#353434]/10 transition-colors px-2 -mx-2 rounded">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA67lc-ljuJr-w6Jbeqedd0Ya-HM30RIZEr1f2fVLYIOlYA-k9dXoJh5UPbyHMlK__Y8EpmUK1BjMpuu71x7fcocmI6G-brfnXzPFryaufLpWZLrEQKe68O0Wy3oHaVjbkLd54VW8AsP3OQaQYL2Lr6Yx7p0OAPpg3fQMe6qwNZnQtZurr9ks6NXtDrI1ZGUfSQvyGUQav2nxHV-4uQB1LuWdRLu7D5_Pt8jm1PeNEIdxLQ0AQ247c2kwsEZFBYAyHk5aD1_rjHROMf" className="w-8 h-8 rounded border border-[#8e9192]/30" alt="Avatar 1" />
-              <span className="text-[14px] font-medium text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>0xA1...3F9</span>
-            </div>
-            
-            <div className="flex items-center gap-3 py-1 border-b border-[#8e9192]/5 hover:bg-[#353434]/10 transition-colors px-2 -mx-2 rounded">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUDHW6elDtM4M-avUo7WXfcSQDQQAp4gZ0Ly9RYuaVs13BskKGboC5eiJDAub2ZDTlYG7sqrdyuPQPY-3MB6KMIwGIgYFdot9PSIguH5rMBhOMLxeLaVJtL8B6H5egSr-9DUkmKtNCdAev_dwBn1MLAd1u60cV4lC_qOzttlzj1SqV8d9ys99TywXSczzf3BHft0AKVS81JfdxV0AH3hF571irSYUBkAIRb_7GsknuxhD2FAH6vI0x0udtnj1AxHhI3Ce94Q5OM-uh" className="w-8 h-8 rounded border border-[#8e9192]/30" alt="Avatar 2" />
-              <span className="text-[14px] font-medium text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>0x7B...E22</span>
-            </div>
-            
-            <div className="flex items-center gap-3 py-1 hover:bg-[#353434]/10 transition-colors px-2 -mx-2 rounded">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsZe8W3alztBt53QPOL_7XN6lAqZbXU-5OBaYr1NovXKs59vXsXl_Hv3kWh1m0-pL3--PsqFo06wFdjgVU57Ewcbxwz0QN8_M9U4gOsBc_VF91DJrUkeFXq9LMgcXURPeFmqy9cKNmjRpXd1dl2MizXlNUvdi23j2VUR_VBVeUEkkHDjbiCisICr-mpv1OS0C77EppWiehQgrU_JgmpH0VEmDyi3bgFCEBMSiGwh_bHtimonj2Zde9QVeoLjAfSu24C1R8gFXX-B0R" className="w-8 h-8 rounded border border-[#8e9192]/30" alt="Avatar 3" />
-              <span className="text-[14px] font-medium text-[#e5e2e1]" style={{ fontFamily: 'JetBrains Mono' }}>0x9C...11A</span>
-            </div>
-            
-          </div>
+          <Link href="/debate" className="mt-2 w-full py-2.5 bg-[#8a2be2]/10 text-[#8a2be2] border border-[#8a2be2] hover:bg-[#8a2be2] hover:text-white transition-all rounded text-[12px] font-bold tracking-widest text-center" style={{ fontFamily: 'JetBrains Mono' }}>
+            ENTER ARENA
+          </Link>
         </div>
 
       </aside>
