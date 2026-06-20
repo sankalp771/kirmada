@@ -1,5 +1,5 @@
-=== USER 2 PHASE 1 DEVELOPMENT & MIGRATION LOG ===
-Last Updated: 2026-06-20T15:43:00+05:30
+=== USER 2 DEVELOPMENT & MIGRATION LOG ===
+Last Updated: 2026-06-20T16:00:00+05:30
 Branch: U2-Sankalp
 Environment: Next.js + Neon PostgreSQL + Monad Testnet
 
@@ -102,12 +102,70 @@ Ran 2 tests for test/SchismRegistry.t.sol:SchismRegistryTest
 [PASS] test_RecordAlliance() (gas: 12891)
 [PASS] test_RecordSchism() (gas: 15401)
 Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 1.28s (763.70µs CPU time)
-
-Ran 1 test suite in 1.85s (1.28s CPU time): 2 tests passed, 0 failed, 0 skipped (2 total tests)
 --------------------------------------------------------------------------------
 
 ================================================================================
-6. PRODUCTION COMPILATION STATUS
+6. MONAD TESTNET DEPLOYMENT
+================================================================================
+Contract Name: SchismRegistry
+Network: Monad Testnet (Chain ID 10143)
+RPC URL: https://testnet-rpc.monad.xyz
+Contract Deployed Address: 0x907FFD5ed9a8f53A3Fb86D65B398f0d456e270A5
+
+Deployment Script Output (forge script):
+--------------------------------------------------------------------------------
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  SchismRegistry deployed at: 0x907FFD5ed9a8f53A3Fb86D65B398f0d456e270A5
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+--------------------------------------------------------------------------------
+
+================================================================================
+7. FEATURE 6: DOCTRINE VERSIONING
+================================================================================
+Endpoint: GET /api/ideology/[id]/doctrine & POST /api/ideology/[id]/doctrine
+Logic Verification Output (npx tsx scripts/test-versioning.ts):
+--------------------------------------------------------------------------------
+Current version of Solarpunk: v1
+Updating Solarpunk doctrine to version: v2...
+Transaction committed!
+
+Verified updated doctrine version on ideology: v2
+Total versions in history: 2
+Doctrine change events logged: 1
+
+VERIFICATION SUCCESS: F6 versioning transaction logic works perfectly!
+--------------------------------------------------------------------------------
+
+================================================================================
+8. SCHISM EVENTS (Neon DB + Monad Testnet On-chain Write)
+================================================================================
+Endpoint: POST /api/schism
+Logic Verification Output (npx tsx scripts/test-schism.ts):
+--------------------------------------------------------------------------------
+Connecting to database for Schism test...
+Parent Ideology: Techno-Optimism (ID: 1)
+New Ideology: Solarpunk (ID: 3)
+Justification: "Divergent visions on solar integration versus planetary expansion."
+Recorded schism in Neon DB. ID: 1
+Recorded schism event log in Neon DB.
+Triggering on-chain recordSchism on Monad Testnet...
+Submitting on-chain recordSchism transaction: parent=1, new=3...
+Transaction submitted. Hash: 0xff8bb97e6a69ccce7f79979f35378ddde4c3d0cfdf975f8ec3145e10fad2b852
+Transaction confirmed in block 39448159
+Transaction committed!
+
+SUCCESS: Schism transaction verified!
+Transaction Hash: 0xff8bb97e6a69ccce7f79979f35378ddde4c3d0cfdf975f8ec3145e10fad2b852
+Block Number: 39448159
+Database connection closed.
+--------------------------------------------------------------------------------
+
+================================================================================
+9. PRODUCTION COMPILATION STATUS
 ================================================================================
 Build command: pnpm run build
 Turbopack compilation and TypeScript verification: PASSED
